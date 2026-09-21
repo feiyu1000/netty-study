@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器端消息</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; margin: 0; background: #f5f6fa; }
+        header { background: #2f54eb; color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+        h1 { margin: 0; font-size: 20px; }
+        #status { font-size: 13px; padding: 4px 12px; border-radius: 12px; background: rgba(255,255,255,.2); }
+        #messages { list-style: none; margin: 0; padding: 16px 24px; }
+        #messages li { background: #fff; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.06); font-size: 14px; word-break: break-all; }
+        .time { color: #999; font-size: 12px; margin-right: 8px; }
+        .empty { color: #999; text-align: center; padding: 40px 0; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>服务器端消息</h1>
+    <div id="status">未连接</div>
+</header>
+<ul id="messages"><li class="empty" id="empty">暂无消息，等待客户端发送…</li></ul>
+<script>
+    const status = document.getElementById('status');
+    const list = document.getElementById('messages');
+    const empty = document.getElementById('empty');
+    const ws = new WebSocket('ws://' + location.host + '/ws?channel=server');
+
+    ws.onopen = () => status.textContent = '已连接';
+    ws.onclose = () => status.textContent = '连接已断开';
+    ws.onmessage = (e) => {
+        empty.remove();
+        const li = document.createElement('li');
+        const time = new Date().toLocaleTimeString();
+        li.innerHTML = '<span class="time">[' + time + ']</span>' + e.data;
+        list.prepend(li);
+    };
+</script>
+</body>
+</html>
