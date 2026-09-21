@@ -54,7 +54,7 @@ public final class NettyHttpServer {
                                     .addLast(new HttpServerCodec())
                                     .addLast(new HttpObjectAggregator(65536))
                                     .addLast(new HttpStaticPageHandler())
-                                    .addLast(new WebSocketServerProtocolHandler(WS_PATH))
+                                    .addLast(new WebSocketServerProtocolHandler(WS_PATH, true))
                                     .addLast(new WebSocketFrameHandler());
                         }
                     });
