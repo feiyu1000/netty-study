@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.feiyu'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.netty:netty-all:4.1.115.Final'
+//    testImplementation platform('org.junit:junit-bom:6.0.0')
+//    testImplementation 'org.junit.jupiter:junit-jupiter'
+//    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.register('runNettyServer', JavaExec) {
+    group = 'application'
+    description = '运行 Netty Socket 服务器端'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.feiyu.netty.NettySocketServer'
+}
+
+tasks.register('runNettyClient', JavaExec) {
+    group = 'application'
+    description = '运行 Netty Socket 客户端'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.feiyu.netty.NettySocketClient'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(JavaExec).configureEach {
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+    systemProperty 'stderr.encoding', 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty 'file.encoding', 'UTF-8'
+}
