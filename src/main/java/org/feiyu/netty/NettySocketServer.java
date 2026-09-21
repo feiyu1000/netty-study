@@ -12,6 +12,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.CharsetUtil;
 
 public class NettySocketServer {
@@ -43,6 +44,7 @@ public class NettySocketServer {
                             ch.pipeline()
                                     .addLast(new LineBasedFrameDecoder(1024))
                                     .addLast(new StringDecoder(CharsetUtil.UTF_8))
+                                    .addLast(new StringEncoder(CharsetUtil.UTF_8))
                                     .addLast(new ServerHandler());
                         }
                     });
@@ -60,14 +62,13 @@ public class NettySocketServer {
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
             System.out.println("客户端已连接：" + ctx.channel().remoteAddress());
+            MessageBroker.registerSocketClient(ctx.channel());
         }
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-            String serverView = "收到客户端 [" + ctx.channel().remoteAddress() + "] 消息：" + msg;
-            System.out.println(serverView);
-            MessageBroker.broadcastServerView(serverView);
-            MessageBroker.broadcastClientView(msg);
+            System.out.println("收到客户端 [" + ctx.channel().remoteAddress() + "] 消息：" + msg);
+            MessageBroker.onSocketClientMessage(ctx.channel(), msg);
         }
 
         @Override

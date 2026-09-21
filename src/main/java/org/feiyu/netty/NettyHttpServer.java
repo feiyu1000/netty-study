@@ -150,7 +150,15 @@ public final class NettyHttpServer {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
-            if (frame instanceof CloseWebSocketFrame) {
+            if (frame instanceof TextWebSocketFrame) {
+                String text = ((TextWebSocketFrame) frame).text();
+                String view = ctx.channel().attr(VIEW_KEY).get();
+                if ("client".equals(view)) {
+                    MessageBroker.onClientPageMessage(text);
+                } else {
+                    MessageBroker.onServerPageMessage(text);
+                }
+            } else if (frame instanceof CloseWebSocketFrame) {
                 ctx.close();
             }
         }

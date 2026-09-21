@@ -6,14 +6,16 @@
     <title>客户端消息</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; margin: 0; background: #f5f6fa; }
-        header { background: #389e0d; color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
-        h1 { margin: 0; font-size: 20px; }
-        #status { font-size: 13px; padding: 4px 12px; border-radius: 12px; background: rgba(255,255,255,.2); }
-        #messages { list-style: none; margin: 0; padding: 16px 24px; }
-        #messages li { background: #fff; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.06); font-size: 14px; word-break: break-all; }
-        .time { color: #999; font-size: 12px; margin-right: 8px; }
-        .empty { color: #999; text-align: center; padding: 40px 0; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; margin: 0; background: #f5f6fa; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #389e0d; color: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        h1 { margin: 0; font-size: 18px; }
+        #status { font-size: 13px; padding: 3px 12px; border-radius: 12px; background: rgba(255,255,255,.2); }
+        #display { flex: 1; margin: 12px 16px 0; padding: 12px; border: 1px solid #d9d9d9; border-radius: 6px; resize: none; font-size: 14px; line-height: 1.7; background: #fff; outline: none; }
+        .input-bar { display: flex; gap: 8px; margin: 12px 16px 16px; flex-shrink: 0; }
+        #input { flex: 1; height: 78px; padding: 10px; border: 1px solid #d9d9d9; border-radius: 6px; resize: none; font-size: 14px; outline: none; }
+        #send { width: 90px; flex-shrink: 0; border: none; border-radius: 6px; color: #fff; font-size: 15px; cursor: pointer; background: #389e0d; }
+        #send:hover { opacity: .85; }
+        #send:disabled { opacity: .4; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -21,22 +23,44 @@
     <h1>客户端消息</h1>
     <div id="status">未连接</div>
 </header>
-<ul id="messages"><li class="empty" id="empty">暂无消息，等待客户端发送…</li></ul>
+<textarea id="display" readonly placeholder="消息显示区域，聊天记录将显示在这里…"></textarea>
+<div class="input-bar">
+    <textarea id="input" placeholder="输入消息，点击发送或按 Enter 发送…"></textarea>
+    <button id="send">发送</button>
+</div>
 <script>
     const status = document.getElementById('status');
-    const list = document.getElementById('messages');
-    const empty = document.getElementById('empty');
+    const display = document.getElementById('display');
+    const input = document.getElementById('input');
+    const send = document.getElementById('send');
     const ws = new WebSocket('ws://' + location.host + '/ws?channel=client');
 
-    ws.onopen = () => status.textContent = '已连接';
-    ws.onclose = () => status.textContent = '连接已断开';
+    ws.onopen = () => { status.textContent = '已连接'; send.disabled = false; };
+    ws.onclose = () => { status.textContent = '连接已断开'; send.disabled = true; };
     ws.onmessage = (e) => {
-        empty.remove();
-        const li = document.createElement('li');
-        const time = new Date().toLocaleTimeString();
-        li.innerHTML = '<span class="time">[' + time + ']</span>' + e.data;
-        list.prepend(li);
+        display.value += e.data + '\n';
+        display.scrollTop = display.scrollHeight;
     };
+
+    function sendMessage() {
+        if (ws.readyState !== WebSocket.OPEN) {
+            alert('连接未建立，请稍后再试');
+            return;
+        }
+        const text = input.value.trim();
+        if (!text) return;
+        ws.send(text);
+        input.value = '';
+        input.focus();
+    }
+
+    send.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 </script>
 </body>
 </html>

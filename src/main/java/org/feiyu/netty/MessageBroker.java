@@ -10,6 +10,7 @@ public final class MessageBroker {
 
     private static final ChannelGroup SERVER_VIEW_CHANNELS = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     private static final ChannelGroup CLIENT_VIEW_CHANNELS = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private static final ChannelGroup SOCKET_CLIENTS = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     private MessageBroker() {
     }
@@ -22,11 +23,31 @@ public final class MessageBroker {
         }
     }
 
-    public static void broadcastServerView(String message) {
-        SERVER_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+    public static void registerSocketClient(Channel channel) {
+        SOCKET_CLIENTS.add(channel);
     }
 
-    public static void broadcastClientView(String message) {
-        CLIENT_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame("客户端发送：" + message));
+    public static void onServerPageMessage(String text) {
+        String message = "[服务器端] " + text;
+        SERVER_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+        CLIENT_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+        broadcastToSocketClients("服务器端: " + text);
+    }
+
+    public static void onClientPageMessage(String text) {
+        String message = "[客户端] " + text;
+        SERVER_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+        CLIENT_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+        broadcastToSocketClients("客户端: " + text);
+    }
+
+    public static void onSocketClientMessage(Channel channel, String text) {
+        String message = "[客户端] " + text;
+        SERVER_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+        CLIENT_VIEW_CHANNELS.writeAndFlush(new TextWebSocketFrame(message));
+    }
+
+    private static void broadcastToSocketClients(String message) {
+        SOCKET_CLIENTS.writeAndFlush(message + "\n");
     }
 }
